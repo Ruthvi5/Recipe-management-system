@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ recipe.name }} - Recipe Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='recipe_details.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .favorite-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;  
+            color: #ff4b4b;
+            padding: 5px;
+            transition: transform 0.2s;
+        }
+        .favorite-btn:hover {
+            transform: scale(1.1);
+        }
+        .favorite-btn i.fas {
+            color: #ff4b4b;
+        }
+        .favorite-btn i.far {
+            color: #ff4b4b;
+        }
+    </style>
+    <script>
+        function toggleFavorite(button, recipeId) {
+            fetch('/toggle-favorite/' + recipeId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+            const icon = button.querySelector('i');
+                    if (data.is_favorite) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                        button.classList.add('active');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                        button.classList.remove('active');
+                    }
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error toggling favorite status');
+            });
+        }
+
+        function submitReview(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const rating = form.querySelector('input[name="rating"]:checked').value;
+            const comment = form.querySelector('#comment').value;
+            
+            fetch('/submit-review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    recipe_id: {{ recipe.recipe_id }},
+                    comment: comment,
+                    rating: parseInt(rating)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'success-message';
+                    successMessage.textContent = 'Review submitted successfully!';
+                    form.parentNode.insertBefore(successMessage, form);
+                    
+                    // Reload the page after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    alert(data.message || 'Error submitting review');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting review');
+            });
+        }
+
+        function deleteReview(recipeId) {
+            if (confirm("Are you sure you want to delete your review?")) {
+                fetch('/delete-review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipe_id: recipeId })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) location.reload();
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error deleting review.');
+                });
+            }
+        }
+        
+        
+
+        // Star rating hover effect
+        document.querySelectorAll('.star-rating label').forEach(label => {
+            label.addEventListener('mouseover', function() {
+                const rating = this.getAttribute('for').replace('star', '');
+                const stars = document.querySelectorAll('.star-rating label');
+                stars.forEach((star, index) => {
+                    if (index < 5 - rating) {
+                        star.querySelector('i').classList.remove('fas');
+                        star.querySelector('i').classList.add('far');
+                    } else {
+                        star.querySelector('i').classList.remove('far');
+                        star.querySelector('i').classList.add('fas');
+                    }
+                });
+            });
+
+            // Add click event to fill stars
+            label.addEventListener('click', function() {
+                const rating = this.getAttribute('for').replace('star', '');
+                const stars = document.querySelectorAll('.star-rating label');
+                stars.forEach((star, index) => {
+                    if (index < 5 - rating) {
+                        star.querySelector('i').classList.remove('fas');
+                        star.querySelector('i').classList.add('far');
+                    } else {
+                        star.querySelector('i').classList.remove('far');
+                        star.querySelector('i').classList.add('fas');
+                    }
+                });
+            });
+        });
+
+        // Reset stars when mouse leaves
+        document.querySelector('.star-rating').addEventListener('mouseleave', function() {
+            const checked = document.querySelector('input[name="rating"]:checked');
+            if (checked) {
+                const rating = checked.value;
+                const stars = document.querySelectorAll('.star-rating label');
+                stars.forEach((star, index) => {
+                    if (index < 5 - rating) {
+                        star.querySelector('i').classList.remove('fas');
+                        star.querySelector('i').classList.add('far');
+                    } else {
+                        star.querySelector('i').classList.remove('far');
+                        star.querySelector('i').classList.add('fas');
+                    }
+                });
+            } else {
+                const stars = document.querySelectorAll('.star-rating label');
+                stars.forEach(star => {
+                    star.querySelector('i').classList.remove('fas');
+                    star.querySelector('i').classList.add('far');
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="recipe-details-container">
+        <div class="home-button-container">
+            <a href="{{ url_for('index') }}" class="home-button">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+        <div class="recipe-main">
+            <div class="recipe-content">
+                <div class="recipe-header">
+                    <div class="recipe-title-favorite">
+                        <h1>{{ recipe.name }}</h1>
+                        {% if logged_in %}
+                        <button class="favorite-btn {% if is_favorite %}active{% endif %}" 
+                                onclick="toggleFavorite(this, {{ recipe.recipe_id }})">
+                            <i class="{% if is_favorite %}fas{% else %}far{% endif %} fa-heart"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="recipe-meta">
+                        <div class="recipe-meta-item">
+                            <i class="fas fa-user"></i>
+                            <span>{{ recipe.user_name }}</span>
+                        </div>
+                        <div class="recipe-meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ recipe.cooking_time }} mins</span>
+                        </div>
+                        <div class="recipe-meta-item">
+                            <i class="fas fa-utensils"></i>
+                            <span>{{ recipe.servings }} servings</span>
+                        </div>
+                        <div class="recipe-meta-item">
+                            <i class="fas fa-signal"></i>
+                            <span>{{ recipe.difficulty_level }}</span>
+                        </div>
+                        <div class="recipe-meta-item">
+                            <i class="fas fa-tag"></i>
+                            <span>{{ recipe.category }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recipe-image">
+                    <img src="{{ recipe.image}}" 
+                            alt="{{ recipe.name }}"
+                            onerror="this.onerror=null; this.src='{{ default_recipe_image }}';">
+
+                </div>
+
+                <div class="recipe-info">
+                    <div class="recipe-description">
+                        <h2>Description</h2>
+                        <p>{{ recipe.description }}</p>
+                    </div>
+
+                    <div class="recipe-ingredients">
+                        <h2>Ingredients</h2>
+                        <ul>
+                            {% for ingredient in recipe.ingredients %}
+                            <li>
+                                <span class="name">{{ ingredient.name }}</span>
+                                <span class="quantity">{{ ingredient.quantity }} {{ ingredient.unit }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="recipe-instructions">
+                        <h2>Instructions</h2>
+                        <div class="instructions-list">
+                            {% for instruction in instructions %}
+                            <div class="instruction-step">
+                                <span class="step-number">Step {{ instruction.step_no }}</span>
+                                <p class="step-description">
+                                    {{ instruction.description }}
+                                    {% if instruction.ingredients %}
+                                    <span class="step-ingredients"> 
+                                        {% for ingredient in instruction.ingredients %}
+                                            {{ ingredient.quantity }} {{ ingredient.unit }} {{ ingredient.name }}{% if not loop.last %} and {% endif %}
+                                        {% endfor %}
+                                    </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="recipe-reviews">
+                        <h2>Reviews</h2>
+                        <div class="reviews-list">
+                            {% if reviews %}
+                                {% for review in reviews %}
+                                <div class="review-item">
+                                    <div class="review-header">
+                                        <div class="review-user">
+                                            <i class="fas fa-user"></i>
+                                            <span>{{ review.user_name }}</span>
+                                        </div>
+                                        <div class="review-rating">
+                                            {% for i in range(5) %}
+                                                <i class="fas fa-star {% if review.rating is not none and i < review.rating %}filled{% endif %}"></i>
+                                            {% endfor %}
+                                        </div>
+                                        {% if review.user_id == user_id %}
+                                            <button onclick="deleteReview({{ review.recipe_id }})" class="delete-review-btn">
+                                                <i class="fas fa-trash"></i> Delete Review
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    <p class="review-comment">{{ review.comment }}</p>
+                                    <div class="review-time">{{ review.uploaded_at }}</div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="no-reviews">No reviews yet. Be the first to review!</p>
+                            {% endif %}
+                        </div>
+
+                        {% if logged_in and (user_type == 'registered_user' or user_type == 'admin') %}
+                        <div class="add-review">
+                            {% if has_reviewed %}
+                            <div class="already-reviewed">
+                                <h3>You've Already Reviewed This Recipe</h3>
+                                <p>You can update your review by submitting a new one.</p>
+                            </div>
+                            {% endif %}
+                            <h3>{% if has_reviewed %}Update Your Review{% else %}Add Your Review{% endif %}</h3>
+                            <form id="reviewForm" onsubmit="submitReview(event)">
+                                <div class="rating-input">
+                                    <label>Your Rating:</label>
+                                    <div class="star-rating">
+                                        {% for i in range(5, 0, -1) %}
+                                            <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+                                            <label for="star{{ i }}" title="{{ i }} stars">
+                                                <i class="far fa-star"></i>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="comment-input">
+                                    <label for="comment">Your Comment:</label>
+                                    <textarea id="comment" name="comment" required minlength="10" maxlength="500" 
+                                                placeholder="Share your thoughts about this recipe..."></textarea>
+                                </div>
+                                <button type="submit" class="submit-review">Submit Review</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <h3>Recommended Recipes</h3>
+                <div class="recommended-recipes">
+                    {% for recipe in recommended_recipes %}
+                    <a href="{{ url_for('recipe_details', name=recipe.name) }}" class="recommended-recipe">
+                        <div class="recommended-recipe-image">
+                            <img src="{{ recommended_recipes.image}}"
+                            alt="{{ recommended_recipes.name }}"
+                            onerror="this.onerror=null; this.src='{{ default_recipe_image }}';">
+                        </div>
+                        <div class="recommended-recipe-info">
+                            <h4>{{ recipe.name }}</h4>
+                            <div class="recommended-recipe-meta">
+                                <span><i class="fas fa-tag"></i> {{ recipe.category }}</span>
+                                <span><i class="fas fa-clock"></i> {{ recipe.cooking_time }} mins</span>
+                                <span><i class="fas fa-star"></i> {{ recipe.avg_rating }}</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

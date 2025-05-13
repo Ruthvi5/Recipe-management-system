@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_user.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>Recipe Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin_recipes') }}" class="nav-item">
+                    <i class="fas fa-book"></i>
+                    <span>Recipes</span>
+                </a>
+                <a href="{{ url_for('pending_recipes') }}" class="nav-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Pending Recipes</span>
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="nav-item active">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin_reviews') }}" class="nav-item ">
+                    <i class="fas fa-star"></i>
+                    <span>Reviews</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <h1>User Management</h1>
+            
+            <div class="admin-controls">
+                <div class="search-filter">
+                    <input type="text" id="userSearch" placeholder="Search users...">
+                    <select id="roleFilter">
+                        <option value="all">All Roles</option>
+                        <option value="registered_user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="guest">Guest</option>
+                    </select>
+                </div>
+            </div>
+
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined Date</th>
+                        <th>Recipes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr data-user-id="{{ user.id }}">
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td><span class="role-badge {{ user.role }}">{{ user.role|title }}</span></td>
+                        <td>{{ user.joined_date }}</td>
+                        <td>{{ user.recipe_count }}</td>
+                        <td>
+                            <div class="actions">
+                            {% if user.role != 'guest' %}
+                            <button class="action-btn view" title="View User" onclick="viewUser('{{ user.id }}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% else %}
+                            <button class="action-btn view" title="View User" disabled style="opacity: 0.4; cursor: not-allowed;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% endif %}
+                            
+                            {% if user.role != 'admin' %}
+                            <button class="action-btn delete-user" title="Delete User" onclick="deleteUser({{ user.id }}, '{{ user.username }}')">
+                            <i class="fas fa-trash"></i>
+                            </button>
+                            {%else%}
+                            <button class="action-btn delete-user" title="Delete User" disabled style="opacity: 0.4; cursor: not-allowed;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function viewUser(userId) {
+            window.location.href = `/profile?id=${encodeURIComponent(userId)}`;
+        }
+
+        function deleteUser(userId, username) {
+                if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+                    fetch(`/admin/users/${userId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.querySelector(`tr[data-user-id="${userId}"]`).remove();
+                            alert(`User "${username}" deleted successfully.`);
+                        } else {
+                            alert(data.message || 'Failed to delete user.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while deleting the user.');
+                    });
+                }
+            }
+        
+
+        document.getElementById('userSearch').addEventListener('input', filterUsers);
+        document.getElementById('roleFilter').addEventListener('change', filterUsers);
+
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('.users-table tbody tr');
+
+            rows.forEach(row => {
+                const username = row.cells[0].textContent.toLowerCase();
+                const email = row.cells[1].textContent.toLowerCase();
+                const role = row.cells[2].textContent.toLowerCase();
+
+                const matchesSearch = username.includes(searchTerm) || email.includes(searchTerm);
+                const matchesRole = roleFilter === 'all' || role === roleFilter;
+
+                row.style.display = matchesSearch && matchesRole ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

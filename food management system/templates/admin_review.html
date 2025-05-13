@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reviews - Admin Dashboard</title>
+  <link rel="stylesheet" href="/static/admin_style.css" />
+  <link rel="stylesheet" href="/static/admin_review.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">
+        <i class="fas fa-utensils"></i>
+        <span>Recipe Admin</span>
+      </div>
+      <nav class="nav-menu">
+        <a href="/admin/dashboard" class="nav-item"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+        <a href="/admin/recipes" class="nav-item"><i class="fas fa-book"></i><span>Recipes</span></a>
+        <a href="/admin/pending-recipes" class="nav-item"><i class="fas fa-clock"></i><span>Pending Recipes</span></a>
+        <a href="/admin/users" class="nav-item"><i class="fas fa-users"></i><span>Users</span></a>
+        <a href="/admin/reviews" class="nav-item active"><i class="fas fa-star"></i><span>Reviews</span></a>
+        <a href="/logout" class="nav-item"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <div class="header-content">
+          <h1>Reviews</h1>
+          <p class="subtitle">Manage recipe reviews and ratings</p>
+        </div>
+        <div class="admin-profile" id="adminProfile"></div>
+      </div>
+
+      <div class="filters">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search reviews..." />
+        </div>
+        <select id="ratingFilter" class="rating-filter">
+          <option value="all">All Ratings</option>
+          <option value="5">5 Stars</option>
+          <option value="4">4 Stars</option>
+          <option value="3">3 Stars</option>
+          <option value="2">2 Stars</option>
+          <option value="1">1 Star</option>
+        </select>
+      </div>
+
+      <div class="reviews-table">
+        <table>
+          <thead>
+            <tr>
+              <th>RECIPE</th>
+              <th>USER</th>
+              <th>RATING</th>
+              <th>COMMENT</th>
+              <th>DATE</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="reviewsBody">
+            <!-- JavaScript will fill this -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const ratingFilter = document.getElementById('ratingFilter');
+    const reviewsBody = document.getElementById('reviewsBody');
+    const adminProfile = document.getElementById('adminProfile');
+    let reviews = [];
+
+    function renderReviews() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const rating = ratingFilter.value;
+
+      reviewsBody.innerHTML = '';
+
+      reviews.forEach(review => {
+        const recipeName = review.recipe_name.toLowerCase();
+        const username = review.username.toLowerCase();
+        const reviewRating = review.rating;
+
+        const matchesSearch = recipeName.includes(searchTerm) || username.includes(searchTerm);
+        const matchesRating = rating === 'all' || reviewRating === parseInt(rating);
+
+        if (matchesSearch && matchesRating) {
+          const row = document.createElement('tr');
+          row.setAttribute('data-review-id', review.id);
+
+          row.innerHTML = `
+            <td>${review.recipe_name}</td>
+            <td>${review.username}</td>
+            <td>
+              <div class="rating">
+                ${[...Array(5)].map((_, i) => 
+                  `<i class="fas fa-star ${i < review.rating ? 'filled' : ''}"></i>`
+                ).join('')}
+              </div>
+            </td>
+            <td>${review.comment}</td>
+            <td>${review.date}</td>
+            <td class="actions">
+              <button class="action-btn delete" title="Delete Review" onclick="deleteReview(${review.recipe_id}, ${review.user_id})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          `;
+          reviewsBody.appendChild(row);
+        }
+      });
+    }
+
+    function deleteReview(recipeId, userId) {
+      if (confirm("Are you sure you want to delete this review?")) {
+        fetch('/delete-review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipe_id: recipeId, user_id: userId })
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          if (data.success) loadReviews();
+        })
+        .catch(err => {
+          console.error("Error:", err);
+          alert("An error occurred while deleting the review.");
+        });
+      }
+    }
+
+    function loadReviews() {
+      fetch('/api/reviews')
+        .then(res => res.json())
+        .then(data => {
+          reviews = data.reviews;
+          renderReviews();
+        });
+    }
+
+    function loadAdminName() {
+      fetch('/api/admin-name')
+        .then(res => res.json())
+        .then(data => {
+          const admin = data.admin_name;
+          adminProfile.innerHTML = `
+            <span class="admin-badge">${admin[0]}</span>
+            <span class="admin-text">${admin}</span>
+          `;
+        });
+    }
+
+    searchInput.addEventListener('input', renderReviews);
+    ratingFilter.addEventListener('change', renderReviews);
+
+    // Load on page start
+    loadReviews();
+    loadAdminName();
+  </script>
+</body>
+</html>

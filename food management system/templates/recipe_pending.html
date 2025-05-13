@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Recipes - Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_recipe.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>Recipe Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin_recipes') }}" class="nav-item">
+                    <i class="fas fa-book"></i>
+                    <span>Recipes</span>
+                </a>
+                <a href="{{ url_for('pending_recipes') }}" class="nav-item active">
+                    <i class="fas fa-clock"></i>
+                    <span>Pending Recipes</span>
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin_reviews') }}" class="nav-item">
+                    <i class="fas fa-star"></i>
+                    <span>Reviews</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1>Pending Recipes</h1>
+                <div class="admin-profile">
+                    <span class="admin-badge">{{ admin_name[0] }}</span>
+                    <span class="admin-text">{{ admin_name }}</span>
+
+                </div>
+            </div>
+
+            <!-- Subheader -->
+            <div class="subheader">
+                <p>Review and approve pending recipe submissions</p>
+                <div class="search-filter">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search pending recipes..." id="searchInput">
+                    </div>
+                    <select class="status-filter" id="categoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="Veg">Veg</option>
+                        <option value="Non-veg">Non-veg</option>
+                        <option value="Desserts">Desserts</option>
+                        <option value="Drinks">Drinks</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Recipe Table -->
+            <div class="recipe-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>RECIPE NAME</th>
+                            <th>SUBMITTED BY</th>
+                            <th>CATEGORY</th>
+                            <th>DATE ADDED</th>
+                            <th>STATUS</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for recipe in recipes %}
+                        <tr>
+                            <td>{{ recipe.name }}</td>
+                            <td>{{ recipe.submitted_by }}</td>
+                            <td>{{ recipe.category }}</td>
+                            <td>{{ recipe.date_added }}</td>
+                            <td>
+                                <span class="status-badge pending">{{ recipe.status }}</span>
+                            </td>
+                            <td class="actions">
+                                <button class="action-btn view" title="View Recipe" onclick="viewRecipe('{{ recipe.name }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn approve" title="Approve Recipe" onclick="approveRecipe('{{ recipe.id }}')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="action-btn reject" title="Reject Recipe" onclick="rejectRecipe('{{ recipe.id }}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const recipeName = row.querySelector('td').textContent.toLowerCase();
+                row.style.display = recipeName.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
+        // Category filter
+        document.getElementById('categoryFilter').addEventListener('change', function(e) {
+            const category = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const recipeCategory = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                row.style.display = (category === 'all' || recipeCategory === category) ? '' : 'none';
+            });
+        });
+
+        // Action functions
+        function viewRecipe(recipeName) {
+            // Add view recipe functionality
+            window.location.href = `/recipe-details?name=${encodeURIComponent(recipeName)}`;
+        }
+
+        function approveRecipe(recipeID) {
+            if (confirm(`Are you sure you want to approve "${recipeID}"?`)) {
+                fetch(`/approve-recipe/${encodeURIComponent(recipeID)}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                });
+            }
+        }
+        function rejectRecipe(recipeId) {
+            const reason = prompt("Enter rejection reason (optional):");
+            
+            fetch(`/reject-recipe/${recipeId}`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason: reason })
+                })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                        location.reload();
+                    }
+            })
+            .catch(error => {
+                    console.error("Error:", error);
+                    alert("Something went wrong.");
+            });
+        }
+            
+    </script>
+</body>
+</html> 

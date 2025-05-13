@@ -1,0 +1,224 @@
+/* Subheader Styles */
+.subheader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.subheader p {
+    color: #666;
+}
+
+.search-filter {
+    display: flex;
+    gap: 15px;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding: 10px 15px 10px 40px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    width: 300px;
+    font-size: 0.9rem;
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+.status-filter {
+    padding: 10px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: white;
+    color: #333;
+    font-size: 0.9rem;
+    min-width: 150px;
+}
+
+/* Table Styles */
+.recipe-table {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background-color: #f8f9fa;
+    color: #666;
+    font-weight: 500;
+    text-align: left;
+    padding: 15px 20px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+td {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Status Badge Styles */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-badge.pending {
+    background-color: #fff3e0;
+    color: #f9a825;
+}
+
+.status-badge.approved {
+    background-color: #e8f5e9;
+    color: #4caf50;
+}
+
+.status-badge.rejected {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+/* Action Buttons */
+.actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: transparent;
+}
+
+.action-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.action-btn.view {
+    color: #2196f3;
+}
+
+.action-btn.edit {
+    color: #4caf50;
+}
+
+.action-btn.delete {
+    color: #f44336;
+}
+
+.action-btn.approve {
+    color: #4caf50;
+}
+
+.action-btn.reject {
+    color: #f44336;
+}
+
+.action-btn.approve:hover {
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.action-btn.reject:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.pagination span {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.page-btn {
+    width: 35px;
+    height: 35px;
+    border: 1px solid #e0e0e0;
+    background-color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.page-btn:hover {
+    background-color: #f0f7ff;
+    color: #4a90e2;
+    border-color: #4a90e2;
+}
+
+.page-btn.active {
+    background-color: #4a90e2;
+    color: white;
+    border-color: #4a90e2;
+}
+
+.page-btn.prev,
+.page-btn.next {
+    font-size: 0.8rem;
+}
+
+.ellipsis {
+    color: #666;
+    margin: 0 5px;
+}
+
+/* Recipe Link Styles */
+.recipe-link {
+    color: #2196f3;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.recipe-link:hover {
+    color: #1976d2;
+    text-decoration: underline;
+} 

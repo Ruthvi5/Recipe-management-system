@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Recipe Instructions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='add_recipe.css') }}">
+    <script>
+        function handleInstructionChange(select) {
+            if (select.value === 'other') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'instruction';
+                input.placeholder = 'Enter instruction';
+                input.required = true;
+                select.parentNode.replaceChild(input, select);
+            }
+        }
+
+        function handleIngredientChange(select) {
+            if (select.value === 'other') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'ingredient';
+                input.placeholder = 'Enter ingredient';
+                input.required = true;
+                select.parentNode.replaceChild(input, select);
+            }
+        }
+
+        function addInstructionRow() {
+            const container = document.getElementById('instructions');
+            const instructionRows = container.getElementsByClassName('instruction-row');
+            const newStepNumber = instructionRows.length + 1;
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'instruction-row';
+            newRow.innerHTML = `
+                <div class="step-number">Step ${newStepNumber}</div>
+                    <select name="instruction" onchange="handleInstructionChange(this)" required>
+                        <option value="">Select an instruction</option>
+                        {% if db_instructions %}
+                            {% for instruction in db_instructions %}
+                                {% if instruction and instruction.description %}
+                                    <option value="{{ instruction.description }}">{{ instruction.description }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        <option value="other">Other</option>
+                    </select>
+                <input type="hidden" name="instruction_count" value="1">
+                <div class="ingredients">
+                    <div class="ingredient-row">
+                        <select name="ingredient" onchange="handleIngredientChange(this)" required>
+                            <option value="">Select an ingredient</option>
+                            {% if recipe_ingredients %}
+                                {% for ingredient in recipe_ingredients %}
+                                    {% if ingredient %}
+                                        <option value="{{ ingredient }}">{{ ingredient }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            <option value="other">Other</option>
+                        </select>
+                        <input type="number" name="amount" placeholder="Amount" step="0.01" required>
+                        <select name="unit" required>
+                            <option value="">Select Unit</option>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="ml">ml</option>
+                            <option value="l">l</option>
+                            <option value="tsp">tsp</option>
+                            <option value="tbsp">tbsp</option>
+                            <option value="cup">cup</option>
+                            <option value="piece">piece</option>
+                            <option value="pinch">pinch</option>
+                        </select>
+                        <button type="button" class="remove-ingredient" onclick="removeIngredient(this)">Remove</button>
+                    </div>
+                </div>
+                <button type="button" class="add-ingredient-btn" onclick="addIngredientRow(this)">+ Add Ingredient</button>
+                <button type="button" class="remove-instruction" onclick="removeInstructionRow(this)">Remove Step</button>
+            `;
+            container.appendChild(newRow);
+            updateStepNumbers();
+        }
+
+        function addIngredientRow(button) {
+            const ingredientsContainer = button.previousElementSibling;
+            const newRow = document.createElement('div');
+            newRow.className = 'ingredient-row';
+            newRow.innerHTML = `
+                <select name="ingredient" onchange="handleIngredientChange(this)" required>
+                    <option value="">Select an ingredient</option>
+                    {% if recipe_ingredients %}
+                        {% for ingredient in recipe_ingredients %}
+                            {% if ingredient %}
+                                <option value="{{ ingredient }}">{{ ingredient }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    <option value="other">Other</option>
+                </select>
+                <input type="number" name="amount" placeholder="Amount" step="0.01" required>
+                <select name="unit" required>
+                    <option value="">Select Unit</option>
+                    <option value="g">g</option>
+                    <option value="kg">kg</option>
+                    <option value="ml">ml</option>
+                    <option value="l">l</option>
+                    <option value="tsp">tsp</option>
+                    <option value="tbsp">tbsp</option>
+                    <option value="cup">cup</option>
+                    <option value="piece">piece</option>
+                    <option value="pinch">pinch</option>
+                </select>
+                <button type="button" class="remove-ingredient" onclick="removeIngredient(this)">Remove</button>
+            `;
+            ingredientsContainer.appendChild(newRow);
+            
+            // Update the instruction count
+            const instructionRow = ingredientsContainer.closest('.instruction-row');
+            const countInput = instructionRow.querySelector('input[name="instruction_count"]');
+            const currentCount = parseInt(countInput.value);
+            countInput.value = currentCount + 1;
+        }
+
+        function removeInstructionRow(button) {
+            const row = button.closest('.instruction-row');
+            row.parentNode.removeChild(row);
+            updateStepNumbers();
+        }
+
+        function removeIngredient(button) {
+            const ingredientRow = button.closest('.ingredient-row');
+            const instructionRow = ingredientRow.closest('.instruction-row');
+            const countInput = instructionRow.querySelector('input[name="instruction_count"]');
+            const currentCount = parseInt(countInput.value);
+            
+            ingredientRow.remove();
+            countInput.value = currentCount - 1;
+        }
+
+        function updateStepNumbers() {
+            const steps = document.getElementsByClassName('step-number');
+            for (let i = 0; i < steps.length; i++) {
+                steps[i].textContent = `Step ${i + 1}`;
+            }
+        }
+    </script>
+</head>
+<body>
+    <a href="{{ url_for('index') }}" class="home-button">Home</a>
+    <header>
+        <div class="logo">Recipe book</div>
+    </header>
+    <main>
+        <h2>Add Recipe Instructions</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-danger">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('add_recipe_instructions') }}">
+            <div id="instructions">
+                    <div class="instruction-row">
+                        <div class="step-number">Step 1</div>
+                        <select name="instruction" onchange="handleInstructionChange(this)" required>
+                            <option value="">Select an instruction</option>
+                            {% if db_instructions %}
+                                {% for instruction in db_instructions %}
+                                    {% if instruction and instruction.description %}
+                                        <option value="{{ instruction.description }}">{{ instruction.description }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            <option value="other">Other</option>
+                        </select>
+                        <input type="hidden" name="instruction_count" value="1">
+                        <div class="ingredients">
+                            <div class="ingredient-row">
+                                <select name="ingredient" onchange="handleIngredientChange(this)" required>
+                                    <option value="">Select an ingredient</option>
+                                    {% if recipe_ingredients %}
+                                        {% for ingredient in recipe_ingredients %}
+                                            {% if ingredient %}
+                                                <option value="{{ ingredient }}">{{ ingredient }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    <option value="other">Other</option>
+                                </select>
+                                <input type="number" name="amount" placeholder="Amount" step="0.01" required>
+                                <select name="unit" required>
+                                    <option value="">Select Unit</option>
+                                    <option value="g">g</option>
+                                    <option value="kg">kg</option>
+                                    <option value="ml">ml</option>
+                                    <option value="l">l</option>
+                                    <option value="tsp">tsp</option>
+                                    <option value="tbsp">tbsp</option>
+                                    <option value="cup">cup</option>
+                                    <option value="piece">piece</option>
+                                    <option value="pinch">pinch</option>
+                                </select>
+                            <button type="button" class="remove-ingredient" onclick="removeIngredient(this)">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-ingredient-btn" onclick="addIngredientRow(this)">+ Add Ingredient</button>
+                    <button type="button" class="remove-instruction" onclick="removeInstructionRow(this)">Remove Step</button>
+                </div>
+            </div>
+
+            <button type="button" onclick="addInstructionRow()" class="add-instruction-button">+ Add Instruction</button>
+            <button type="submit" class="save-button">Save & Finish</button>
+        </form>
+    </main>
+</body>
+</html> 

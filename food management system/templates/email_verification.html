@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='verification.css') }}">
+</head>
+<body>
+    <div class="email-verification-container">
+        <div class="verification-box">
+            <div class="verification-header">
+                <h2>Welcome to Recipe Book</h2>
+                <p>Please enter your email</p>
+            </div>
+            <form method="POST" action="{{ url_for('email_verification') }}" class="verification-form">
+                <div class="form-group">
+                    <input type="email" name="email" placeholder="Enter your email" required>
+                </div>
+                <button type="submit" class="verify-button">Next</button>
+            </form>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <p class="flash-message">{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</body>
+</html> 

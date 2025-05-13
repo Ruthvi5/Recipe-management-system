@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Book Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>RB Admin</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="{{ url_for('admin_dashboard') }}" class="nav-item active">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Recipe Book Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin_recipes') }}" class="nav-item">
+                    <i class="fas fa-book"></i>
+                    <span>Recipes</span>
+                </a>
+                <a href="{{ url_for('pending_recipes') }}" class="nav-item">
+                    <i class="fas fa-clock"></i>
+                    <span>Pending Recipes</span>
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="{{ url_for('admin_reviews') }}" class="nav-item">
+                    <i class="fas fa-star"></i>
+                    <span>Reviews</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>Dashboard</h1>
+                <div class="admin-profile">
+                    <span class="admin-badge">{{ admin_name[0] }}</span>
+                    <span class="admin-text">{{ admin_name }}</span>
+                </div>
+            </div>
+            <div class="welcome-message">
+                <p>Welcome back! Here's what's happening in your recipe book.</p>
+            </div>
+
+            <div class="stats-container">
+                
+                <div class="stats-card" onclick="window.location.href='{{ url_for('admin_recipes') }}'" style="cursor: pointer;">
+                    <div class="stats-info">
+                        <h3>Total Recipes</h3>
+                        <div class="stats-number">{{ total_recipes }}</div>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                </div>
+
+                <div class="stats-card" onclick="window.location.href='{{ url_for('pending_recipes') }}'" style="cursor: pointer;">
+                    <div class="stats-info">
+                        <h3>Pending Approval</h3>
+                        <div class="stats-number">{{ pending_recipes }}</div>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+
+                <div class="stats-card" onclick="window.location.href='{{ url_for('admin_users') }}'" style="cursor: pointer;">
+                    <div class="stats-info">
+                        <h3>Total Users</h3>
+                        <div class="stats-number">{{ total_users }}</div>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+
+                <div class="stats-card" onclick="window.location.href='{{ url_for('admin_reviews') }}'" style="cursor: pointer;">
+                    <div class="stats-info">
+                        <h3>Total Reviews</h3>
+                        <div class="stats-number">{{ total_reviews }}</div>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

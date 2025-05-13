@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Book</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">Recipe book</div>
+        <div class="search-container">
+            <form action="{{ url_for('index') }}" method="get" class="search-form">
+                <input type="text" name="search" placeholder="Search recipes..." value="{{ search_query if search_query else '' }}">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+        <nav>
+            {% if logged_in %}
+                <a href="{{ url_for('add_recipe') }}" class="add-recipe">Add Recipe</a>
+                <a href="#" class="favorites-btn" onclick="toggleFavorites()">Favorites</a>
+                <a href="{{ url_for('profile') }}" class="add-recipe">Profile</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <div class="category-buttons">
+        <a href="{{ url_for('index', search=search_query if search_query else '') }}" class="category-btn {% if not current_category %}active{% endif %}">All</a>
+        <a href="{{ url_for('index', category='Veg', search=search_query if search_query else '') }}" class="category-btn {% if current_category == 'Veg' %}active{% endif %}">Veg</a>
+        <a href="{{ url_for('index', category='Non-veg', search=search_query if search_query else '') }}" class="category-btn {% if current_category == 'Non-Veg' %}active{% endif %}">Non-Veg</a>
+        <a href="{{ url_for('index', category='Desserts', search=search_query if search_query else '') }}" class="category-btn {% if current_category == 'Desserts' %}active{% endif %}">Desserts</a>
+        <a href="{{ url_for('index', category='Drinks', search=search_query if search_query else '') }}" class="category-btn {% if current_category == 'Drinks' %}active{% endif %}">Drinks</a>
+    </div>
+
+    <main>
+        <div class="recipe-grid">
+            {% if recipes %}
+                {% for recipe in recipes %}
+                <div class="recipe-card" onclick="window.location.href='{{ url_for('recipe_details', name=recipe[0]) }}'" 
+                    data-title="{{ recipe[0] }}" 
+                    data-duration="{{ recipe[3] }}" 
+                    data-servings="{{ recipe[4] }}"
+                    data-category="{{ recipe[1] }}"
+                    data-rating="{{ recipe[2] if recipe[2] else 0 }}">
+                    <img src="{{ recipe[5] if recipe[5] else default_recipe_image }}" 
+                        alt="{{ recipe[0] }}"
+                        onerror="this.onerror=null; this.src='{{ default_recipe_image }}';">
+                    <div class="recipe-card-content">
+                        <h3>{{ recipe[0] }}</h3>
+                        <div class="recipe-meta">
+                            <p>{{ recipe[3] }} mins | {{ recipe[4] }} servings</p>
+                            <p>Category: {{ recipe[1] }}</p>
+                        </div>
+                        <div class="recipe-rating">
+                            <div class="rating-stars">
+                                {% for i in range(5) %}
+                                    {% if i < (recipe[2] if recipe[2] else 0)|round %}
+                                        <span class="star filled">★</span>
+                                    {% else %}
+                                        <span class="star">☆</span>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="rating-count">({{ "%.1f"|format(recipe[2] if recipe[2] else 0) }})</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-recipes">
+                    <p>No recipes found. {% if logged_in %}Be the first to add a recipe!{% endif %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    {% if logged_in %}
+    <div id="favoritesModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleFavorites()">&times;</span>
+            <h2>My Favorites</h2>
+            <div class="favorites-list">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="recipeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleRecipeDetails()">&times;</span>
+            <div class="recipe-main">
+                <div class="recipe-info">
+                    <h2>Chocolate Chip Cookies <span class="favorite" onclick="toggleFavorite()">♡</span></h2>
+                    <img src="{{ url_for('static', filename='images/cookie.jpg') }}" alt="Chocolate Chip Cookies">
+                    <p>Category: Desserts</p>
+                    <p>30 mins | 24 servings</p>
+                    <h3>Ingredients</h3>
+                    <ul>
+                        <li>2 1/4 cups all-purpose flour</li>
+                        <li>3/4 cup sugar</li>
+                        <li>2 eggs</li>
+                    </ul>
+                    <h3>Instructions</h3>
+                    <ol>
+                        <li>Preheat oven to 375°F (190°C).</li>
+                        <li>Cream together butter and sugars.</li>
+                        <li>Beat in eggs and vanilla.</li>
+                        <li>Mix in dry ingredients.</li>
+                        <li>Stir in chocolate chips.</li>
+                        <li>Drop rounded tablespoons onto baking sheets.</li>
+                        <li>Bake for 9 to 11 minutes.</li>
+                    </ol>
+                    <div class="recipe-rating">
+                        <div class="rating-stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                            <span class="rating-value">4.0</span>
+                            <span class="rating-count">(12 reviews)</span>
+                        </div>
+                    </div>
+                    <div class="recipe-section">
+                        <h3>Comments</h3>
+                        <ul class="comments-list">
+                            <li>Great recipe! - User1</li>
+                            <li>My family loved it. - User2</li>
+                            <li>Easy to make. - User3</li>
+                            <li>Delicious! - User4</li>
+                            <li>Will make again. - User5</li>
+                        </ul>
+                        <button class="view-more-comments">View More Comments</button>
+                    </div>
+                    <div class="recipe-section">
+                        <h3>Leave a Comment</h3>
+                        <form id="commentForm">
+                            <textarea id="commentText" placeholder="Write your comment here..." required></textarea>
+                            <button type="submit">Submit Comment</button>
+                        </form>
+                    </div>
+                    <div class="recipe-section">
+                        <h3>Rate This Recipe</h3>
+                        <form id="ratingForm">
+                            <div class="rating-input">
+                                <label for="rating">Your Rating:</label>
+                                <select id="rating" required>
+                                    <option value="">Select</option>
+                                    <option value="1">1 Star</option>
+                                    <option value="2">2 Stars</option>
+                                    <option value="3">3 Stars</option>
+                                    <option value="4">4 Stars</option>
+                                    <option value="5">5 Stars</option>
+                                </select>
+                            </div>
+                            <button type="submit">Submit Rating</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="sidebar">
+                    <h3>More Recipes</h3>
+                    <div class="related-recipes">
+                        <div class="related-recipe">
+            <img src="chili.jpg" alt="Vegetarian Skillet Chili">
+                            <p>Vegetarian Skillet Chili</p>
+                        </div>
+                        <div class="related-recipe">
+                            <img src="{{ url_for('static', filename='images/cookie.jpg') }}" alt="Chocolate Chip Cookies">
+                            <p>Chocolate Chip Cookies</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let hasRated = false;
+
+        function toggleFavorites() {
+            var modal = document.getElementById('favoritesModal');
+            if (modal.style.display === 'block') {
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'block';
+                loadFavorites();
+            }
+        }
+
+        function loadFavorites() {
+            fetch('/get-favorites')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const favoritesList = document.querySelector('.favorites-list');
+                        favoritesList.innerHTML = '';
+                        
+                        if (data.favorites.length === 0) {
+                            favoritesList.innerHTML = '<p class="no-favorites">No favorite recipes yet.</p>';
+                            return;
+                        }
+
+                        data.favorites.forEach(favorite => {
+                            const favoriteItem = document.createElement('div');
+                            favoriteItem.className = 'favorite-item';
+                            favoriteItem.innerHTML = `
+                                <div class="favorite-content" onclick="window.location.href='/recipe-details?name=${encodeURIComponent(favorite.name)}'" style="cursor: pointer; flex-grow: 1; display: flex; align-items: center; gap: 15px;">
+                                    <img src="${favorite.image}" alt="${favorite.name}" 
+                                        onerror="this.onerror=null; this.src='{{default_recipe_image}}';">
+                                    <div class="favorite-info">
+                                        <p class="favorite-name">${favorite.name}</p>
+                                        <p class="favorite-meta">${favorite.cooking_time} mins | ${favorite.category}</p>
+                                    </div>
+                                </div>
+                                <span class="delete" onclick="event.stopPropagation(); deleteFavorite(${favorite.recipe_id}, this)">🗑️</span>
+                            `;
+                            favoritesList.appendChild(favoriteItem);
+                        });
+                    } else {
+                        alert('Error loading favorites: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading favorites');
+                });
+        }
+
+        function deleteFavorite(recipeId, element) {
+            if (confirm('Are you sure you want to remove this recipe from favorites?')) {
+                fetch(`/remove-favorite/${recipeId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        element.closest('.favorite-item').remove();
+                        const favoritesList = document.querySelector('.favorites-list');
+                        if (favoritesList.children.length === 0) {
+                            favoritesList.innerHTML = '<p class="no-favorites">No favorite recipes yet.</p>';
+                        }
+                    } else {
+                        alert('Error removing favorite: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error removing favorite');
+                });
+            }
+        }
+
+        function toggleRecipeDetails() {
+            const modal = document.getElementById('recipeModal');
+            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function toggleFavorite() {
+            const favorite = document.querySelector('.favorite');
+            favorite.classList.toggle('active');
+            favorite.textContent = favorite.classList.contains('active') ? '❤️' : '♡';
+        }
+
+        document.getElementById('commentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const commentText = document.getElementById('commentText').value;
+            if (commentText) {
+                const commentsList = document.querySelector('.comments-list');
+                const newComment = document.createElement('li');
+                newComment.textContent = `${commentText} - Your Comment`;
+                commentsList.appendChild(newComment);
+                document.getElementById('commentText').value = '';
+            }
+        });
+
+        document.getElementById('ratingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (!hasRated) {
+                const rating = document.getElementById('rating').value;
+                if (rating) {
+                    const ratingValue = document.querySelector('.rating-value');
+                    const ratingCount = document.querySelector('.rating-count');
+                    ratingValue.textContent = rating;
+                    ratingCount.textContent = '(1 review)';
+                    hasRated = true;
+                    document.getElementById('rating').value = '';
+                    alert('Thank you for your rating!');
+                }
+            } else {
+                alert('You have already rated this recipe.');
+            }
+        });
+    </script>
+</body>
+</html>
